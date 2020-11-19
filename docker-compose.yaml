@@ -5,11 +5,11 @@ services:
     image: sma-pvoutput:latest
     container_name: sma-pvoutput
     environment:
-      - influx_ip=192.168.1.3
-      - influx_port=8086
-      - influx_db=SMA
-      - influx_user=user
-      - influx_pw=pw
+      - influx_ip=<192.168.1.3>
+      - influx_port=<8086>
+      - influx_db=<SMA>
+      - influx_user=<user>
+      - influx_pw=<pw>
       - pv_consumption=0
       - pv_sid=<PV Output System ID>
       - pv_key=<PV OutPut API Key>
