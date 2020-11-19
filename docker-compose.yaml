@@ -14,8 +14,8 @@ services:
       - pv_sid=<PV Output System ID>
       - pv_key=<PV OutPut API Key>
     logging:
+      driver: "json-file"
       options:
-        driver: "json-file"
         max-size: "500k"
         max-file: "5"
     restart: unless-stopped
