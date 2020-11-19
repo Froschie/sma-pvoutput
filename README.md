@@ -7,16 +7,16 @@ Script to upload SMA data to pvoutput.org Website.
 ```bash
 mkdir sma-pvoutput
 cd sma-pvoutput/
-curl -O https://raw.githubusercontent.com/Froschie/sma-pvoutput/master/Dockerfile
-curl -O https://raw.githubusercontent.com/Froschie/sma-pvoutput/master/start.sh
-curl -O https://raw.githubusercontent.com/Froschie/sma-pvoutput/master/pvoutput.py
+curl -O https://raw.githubusercontent.com/Froschie/sma-pvoutput/main/Dockerfile
+curl -O https://raw.githubusercontent.com/Froschie/sma-pvoutput/main/start.sh
+curl -O https://raw.githubusercontent.com/Froschie/sma-pvoutput/main/pvoutput.py
 docker build --tag sma-pvoutput .
 ```
 
 
 ## Start Docker Container via Docker-Compose File
 ```bash
-curl -O https://raw.githubusercontent.com/Froschie/sma-pvoutput/master/docker-compose.yaml
+curl -O https://raw.githubusercontent.com/Froschie/sma-pvoutput/main/docker-compose.yaml
 vi docker-compose.yaml
 docker-compose up -d
 ```
