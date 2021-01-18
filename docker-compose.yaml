@@ -13,6 +13,7 @@ services:
       - pv_consumption=0
       - pv_sid=<PV Output System ID>
       - pv_key=<PV OutPut API Key>
+      - TZ=Europe/Berlin
     logging:
       driver: "json-file"
       options:

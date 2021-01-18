@@ -8,7 +8,6 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 from influxdb import InfluxDBClient
 import argparse
 import sys
-import signal
 import pytz
 tz = pytz.timezone('Europe/Berlin')
 
@@ -25,13 +24,6 @@ parser.add_argument('--influx_db', type=str, required=True, default="", help='DB
 args=parser.parse_args()
 
 #print(datetime.now(), "Used Arguments:", args)
-
-# Catch Stopping the Docker Container
-def handler_stop_signals(signum, frame):
-    print(datetime.now(), "Container Stopping...")
-    sys.exit(0)
-signal.signal(signal.SIGINT, handler_stop_signals)
-signal.signal(signal.SIGTERM, handler_stop_signals)
 
 # Session Check Function
 def session_check(ip):

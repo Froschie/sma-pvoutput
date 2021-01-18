@@ -8,9 +8,9 @@ Script to upload SMA data to pvoutput.org Website.
 mkdir sma-pvoutput
 cd sma-pvoutput/
 curl -O https://raw.githubusercontent.com/Froschie/sma-pvoutput/main/Dockerfile
-curl -O https://raw.githubusercontent.com/Froschie/sma-pvoutput/main/start.sh
+curl -O https://raw.githubusercontent.com/Froschie/sma-pvoutput/main/run
 curl -O https://raw.githubusercontent.com/Froschie/sma-pvoutput/main/pvoutput.py
-docker build --tag sma-pvoutput .
+docker build --tag=sma-pvoutput --build-arg arch=`dpkg --print-architecture` .
 ```
 
 
