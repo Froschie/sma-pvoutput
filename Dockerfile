@@ -1,13 +1,9 @@
 # first build Alpine Base Image with Init
 FROM alpine:latest
+ARG TARGETPLATFORM
 RUN apk add --no-cache bash curl tzdata
 COPY ./s6download.sh /s6download.sh
-ARG TARGETPLATFORM
-RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM"
-RUN echo `uname -m`
-RUN chmod +x /s6download.sh 
-RUN bash /s6download.sh
-RUN tar xfz /tmp/s6overlay.tar.gz -C / && rm /tmp/s6overlay.tar.gz
+RUN chmod +x /s6download.sh && bash /s6download.sh && tar xfz /tmp/s6overlay.tar.gz -C / && rm /tmp/s6overlay.tar.gz
 ENTRYPOINT ["/init"]
 
 # Image Description
