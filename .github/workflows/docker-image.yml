@@ -24,3 +24,22 @@ jobs:
       -
         name: Available platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
+      -
+        name: Prepare
+        id: prepare
+        run: |
+          DOCKER_IMAGE=froschie/sma-pvoutput
+          DOCKER_PLATFORMS=linux/arm/v7
+          VERSION=2.0
+          TAGS="--tag ${DOCKER_IMAGE}:${VERSION}"
+          echo ::set-output name=docker_image::${DOCKER_IMAGE}
+          echo ::set-output name=version::${VERSION}
+          echo ::set-output name=buildx_args::--platform ${DOCKER_PLATFORMS} \
+            --build-arg VERSION=${VERSION} \
+            --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
+            --build-arg VCS_REF=${GITHUB_SHA::8} \
+            ${TAGS} .
+      -
+        name: Docker Buildx (build)
+        run: |
+          docker buildx build --output "type=image,push=false" ${{ steps.prepare.outputs.buildx_args }}
