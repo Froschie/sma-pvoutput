@@ -1,5 +1,5 @@
 # first build Alpine Base Image with Init
-FROM alpine:latest
+FROM alpine:3.12
 ARG TARGETPLATFORM
 RUN apk add --no-cache bash curl tzdata
 COPY ./s6download.sh /s6download.sh
