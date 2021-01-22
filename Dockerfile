@@ -16,7 +16,7 @@ RUN apk add --no-cache python3 py-pip && pip install influxdb requests
 ENV pv_key="abc" pv_sid="12345" pv_consumption=0 influx_ip="192.168.1.3" influx_port="8086" influx_user="user" influx_pw="pw" influx_db="SMA"
 
 # Startup Script to Container
-RUN mkdir -p /etc/services.d/pv-output
+#RUN mkdir -p /etc/services.d/pv-output
 #COPY ./run /etc/services.d/pv-output/run
 
 # Python Script to Container
