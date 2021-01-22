@@ -2,7 +2,8 @@
 FROM alpine:latest
 RUN apk add --no-cache bash curl tzdata
 COPY ./s6download.sh /s6download.sh
-RUN chmod +x /s6download.sh && ./s6download.sh
+RUN chmod +x /s6download.sh 
+RUN /s6download.sh
 RUN tar xfz /tmp/s6overlay.tar.gz -C / && rm /tmp/s6overlay.tar.gz
 ENTRYPOINT ["/init"]
 
