@@ -3,11 +3,11 @@ FROM alpine:3.12
 ARG TARGETPLATFORM
 RUN apk add --no-cache bash curl tzdata
 COPY ./s6download.sh /s6download.sh
-RUN chmod +x /s6download.sh && bash /s6download.sh && tar xfz /tmp/s6overlay.tar.gz -C / && rm /tmp/s6overlay.tar.gz
+RUN chmod +x /s6download.sh && bash /s6download.sh && tar xfz /tmp/s6overlay.tar.gz -C / && rm /tmp/s6overlay.tar.gz && rm /s6download.sh
 ENTRYPOINT ["/init"]
 
 # Image Description
-LABEL version="2.0" description="Script to Query data from SMA InfluxDB and store it to pvoutput.org."
+LABEL version="2.1" description="Script to Query data from SMA InfluxDB and store it to pvoutput.org."
 
 # Install Python and Python Modules
 RUN apk add --no-cache python3 py-pip && pip install influxdb requests
