@@ -17,7 +17,7 @@ ENV pv_key="abc" pv_sid="12345" pv_consumption=0 influx_ip="192.168.1.3" influx_
 
 # Startup Script to Container
 RUN mkdir -p /etc/services.d/pv-output
-COPY ./run /etc/services.d/pv-output/run
+#COPY ./run /etc/services.d/pv-output/run
 
 # Python Script to Container
 COPY ./pvoutput.py /pvoutput.py
