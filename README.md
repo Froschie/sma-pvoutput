@@ -8,7 +8,7 @@ Pull latest Image:
 
 Start Container:  
 ```
-docker run -it \
+docker run -it --rm \
  -e influx_ip=192.168.1.3 \
  -e influx_port=8086 \
  -e influx_db=SMA \
@@ -20,7 +20,7 @@ docker run -it \
  -e TZ=Europe/Berlin \
  froschie/sma-pvoutput
 ```
-*Note: please adapt the parameters as needed and replace "-it" with "-d" to run it permanently or use docker-compose!*  
+*Note: please adapt the parameters as needed and replace "-it --rm" with "-d" to run it permanently or use docker-compose!*  
 
 
 ## Start Docker Container via Docker-Compose  
