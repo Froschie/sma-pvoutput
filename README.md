@@ -1,4 +1,4 @@
-# sma-pvoutput ![Docker Image CI](https://github.com/Froschie/sma-pvoutput/workflows/Docker%20Image%20CI/badge.svg)
+# sma-pvoutput ![Docker Hub Image](https://github.com/Froschie/sma-pvoutput/workflows/Docker%20Image%20CI/badge.svg)
 Script to upload SMA data to pvoutput.org Website.
 
 ## Start Docker Container  
