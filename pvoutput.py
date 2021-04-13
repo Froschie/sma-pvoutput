@@ -1,7 +1,7 @@
 # encoding: utf-8
 import json
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import requests
 from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
@@ -59,6 +59,14 @@ def pv_limit(key, sid):
     response = requests.request("GET", url, headers=headers, data = payload)
     return response.headers['X-Rate-Limit-Reset']
 
+def pv_wait(key, sid):
+    pv_waittime = int(pv_limit(key, sid))+10
+    now = int(datetime.now().timestamp())
+    log.warning("PV Output Limit reached, waiting for {} s.".format(pv_waittime-now))
+    while now < pv_waittime:
+        time.sleep(1)
+        now = int(datetime.now().timestamp())
+
 def pv_status(key, sid):
     url = "https://pvoutput.org/service/r2/getstatus.jsp"
     payload = {}
@@ -67,15 +75,28 @@ def pv_status(key, sid):
         'X-Pvoutput-Apikey': key
     }
     response = requests.request("GET", url, headers=headers, data = payload)
-    if response.status_code == 403:
-        pv_waittime = int(pv_limit(key, sid))+10
-        now = int(datetime.now().timestamp())
-        log.warning("PV Output Limit reached, waiting for {} s.".format(pv_waittime-now))
-        while now < pv_waittime:
-            time.sleep(1)
-            now = int(datetime.now().timestamp())
-    response = requests.request("GET", url, headers=headers, data = payload)
     log.debug(response.text.encode('utf8'))
+    if response.status_code == 403:
+        pv_wait(key, sid)
+        response = requests.request("GET", url, headers=headers, data = payload)
+        log.debug(response.text.encode('utf8'))
+    if response.status_code == 400:
+        for day in range(1, int(response.headers['X-Rate-Limit-Remaining'])-5):
+            d = date.today() - timedelta(days=day)
+            url = "https://pvoutput.org/service/r2/getstatus.jsp?d={}".format(d.strftime('%Y%m%d'))
+            response = requests.request("GET", url, headers=headers, data = payload)
+            log.debug(response.text.encode('utf8'))
+            if response.status_code == 200:
+                break
+        pv_dict = {
+            'pv_year': d.strftime('%Y'),
+            'pv_month': d.strftime('%m'),
+            'pv_day': d.strftime('%d'),
+            'pv_hour': 0,
+            'pv_min': 0,
+            'pv_unixtime': time.mktime(d.timetuple())
+        }
+        return pv_dict
     pv_values = response.text.split(",")
     pv_year = int(pv_values[0][:4])
     pv_month = int(pv_values[0][4:6])
@@ -142,34 +163,22 @@ try:
                             'X-Pvoutput-SystemId': args.pv_sid
                         }
                         response = requests.request("POST", url, headers=headers, data = payload)
+                        if response.status_code == 403:
+                            pv_wait(args.pv_key, args.pv_sid)
+                            response = requests.request("POST", url, headers=headers, data = payload)
                         if response.status_code == 200:
                             if args.pv_consumption == 1:
                                 log.info("PV Output data added for {} with values {} Wh / {} W for solar and {} Wh / {} W for consumption.".format(ts.strftime('%H:%M %d.%m.%Y'), solar_data[point]['solar'], solar_watt, solar_data[point]['consumption'], consumption_watt))
                             else:
                                 log.info("PV Output data added for {} with value {} Wh / {} W for solar. ".format(ts.strftime('%H:%M %d.%m.%Y'), solar_data[point]['solar'], solar_watt))
                             pv_status_values['pv_unixtime'] = point
-                            continue
-                        if response.status_code == 403:
-                            pv_waittime = int(pv_limit(args.pv_key, args.pv_sid))+10
-                            now = int(datetime.now().timestamp())
-                            log.warning("PV Output Limit reached, waiting for {} s.".format(pv_waittime-now))
-                            while now < pv_waittime:
-                                time.sleep(1)
-                                now = int(datetime.now().timestamp())
-                            response = requests.request("POST", url, headers=headers, data = payload)
-                            if response.status_code == 200:
-                                if args.pv_consumption == 1:
-                                    log.info("PV Output data added for {} with values {} Wh / {} W for solar and {} Wh / {} W for consumption.".format(ts.strftime('%H:%M %d.%m.%Y'), solar_data[point]['solar'], solar_watt, solar_data[point]['consumption'], consumption_watt))
-                                else:
-                                    log.info("PV Output data added for {} with value {} Wh / {} W for solar. ".format(ts.strftime('%H:%M %d.%m.%Y'), solar_data[point]['solar'], solar_watt))
-                                pv_status_values['pv_unixtime'] = point
-                            continue
+                        else:
+                            log.error("PV Output data adding failed with code: {} and text: {}.".format(response.status_code, response.text))
         except Exception as e:
             log.error("InfluxDB error.")
             log.error(e)
         finally:
             client.close()
-
         time.sleep(300 - ((time.time() - new_time.timestamp()) % 300)+10)
 except KeyboardInterrupt:
     log.info("Script aborted...")
