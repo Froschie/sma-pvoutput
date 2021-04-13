@@ -8,6 +8,7 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 from influxdb import InfluxDBClient
 import argparse
 import sys
+import logging
 import pytz
 tz = pytz.timezone('Europe/Berlin')
 
@@ -21,26 +22,14 @@ parser.add_argument('--influx_port', type=str, required=True, default="", help='
 parser.add_argument('--influx_user', type=str, required=True, default="", help='User of the Influx DB Server.')
 parser.add_argument('--influx_pw', type=str, required=True, default="", help='Password of the Influx DB Server.')
 parser.add_argument('--influx_db', type=str, required=True, default="", help='DB name of the Influx DB Server.')
+parser.add_argument('--log', type=str, required=False, default="WARNING", choices=["DEBUG", "INFO", "WARNING", "ERROR"], help='Specify Log output.')
 args=parser.parse_args()
 
-#print(datetime.now(), "Used Arguments:", args)
+# Log Output configuration
+logging.basicConfig(level=getattr(logging, args.log), format='%(asctime)s.%(msecs)05d %(levelname)07s:\t%(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+log = logging.getLogger(__name__)
 
-# Session Check Function
-def session_check(ip):
-    url = "https://" + ip + "/dyn/sessionCheck.json"
-    try:
-        response = requests.request("POST", url, data = "{}", verify=False)
-    except:
-        return (False, "No response from SMA Device (" + ip + ")!")
-    #print(response.json())
-    if response.status_code == 200:
-        if "result" in response.json():
-            if "cntFreeSess" in response.json()['result']:
-                if response.json()['result']['cntFreeSess'] > 0:
-                    return (True, "Sessions OK: " + str(response.json()['result']['cntFreeSess']))
-                else:
-                    return (False, "No free Session on SMA Device (" + ip + ")!")
-    return (False, "Error in Response from SMA Device (" + ip + ")!")
+log.debug("Used Arguments: " + str(args))
 
 # Time Rounding Function
 def ceil_time(ct, delta):
@@ -49,7 +38,7 @@ def ceil_time(ct, delta):
 now = datetime.now()
 new_time = ceil_time(now, timedelta(seconds=300))
 
-print(now, "Actual Time:", now, "waiting for:", new_time)    
+log.info("Actual Time: " + str(now) + " waiting for: " + str(new_time))
 
 # Wait for Full Minute / Half Minute
 while now < new_time:
@@ -81,12 +70,12 @@ def pv_status(key, sid):
     if response.status_code == 403:
         pv_waittime = int(pv_limit(key, sid))+10
         now = int(datetime.now().timestamp())
-        print(datetime.now(), "PV Output Limit reached, waiting for", pv_waittime-now, "s.")
+        log.warning("PV Output Limit reached, waiting for {} s.".format(pv_waittime-now))
         while now < pv_waittime:
             time.sleep(1)
             now = int(datetime.now().timestamp())
     response = requests.request("GET", url, headers=headers, data = payload)
-    #print(response.text.encode('utf8'))
+    log.debug(response.text.encode('utf8'))
     pv_values = response.text.split(",")
     pv_year = int(pv_values[0][:4])
     pv_month = int(pv_values[0][4:6])
@@ -105,12 +94,12 @@ def pv_status(key, sid):
     return pv_dict
 
 pv_status_values = pv_status(args.pv_key, args.pv_sid)
-print(datetime.now(), "Last PV Output Value: %s:%s %s.%s.%s" % (pv_status_values['pv_hour'], pv_status_values['pv_min'], pv_status_values['pv_day'], pv_status_values['pv_month'], pv_status_values['pv_year']) )
+log.info("Last PV Output Value: {}:{} {}.{}.{}".format(pv_status_values['pv_hour'], pv_status_values['pv_min'], pv_status_values['pv_day'], pv_status_values['pv_month'], pv_status_values['pv_year']))
 
 # Execute Query every Xs
 try:
     while True:
-        print(datetime.now(), "Querying SMA Values from Influx from Timestamp ", pv_status_values['pv_unixtime'])
+        log.info("Querying SMA Values from Influx from Timestamp " + str(pv_status_values['pv_unixtime']))
         # Connect to InfluxDB and save Solar Values
         try:
             client = InfluxDBClient(host=args.influx_ip, port=args.influx_port, username=args.influx_user, password=args.influx_pw)
@@ -155,34 +144,34 @@ try:
                         response = requests.request("POST", url, headers=headers, data = payload)
                         if response.status_code == 200:
                             if args.pv_consumption == 1:
-                                print(datetime.now(), "PV Output data added for %s" % (ts.strftime('%H:%M %d.%m.%Y')), "with values", solar_data[point]['solar'], "Wh /", solar_watt, "W for solar and", solar_data[point]['consumption'], "Wh /", consumption_watt, "W for consumption.")
+                                log.info("PV Output data added for {} with values {} Wh / {} W for solar and {} Wh / {} W for consumption.".format(ts.strftime('%H:%M %d.%m.%Y'), solar_data[point]['solar'], solar_watt, solar_data[point]['consumption'], consumption_watt))
                             else:
-                                print(datetime.now(), "PV Output data added for %s" % (ts.strftime('%H:%M %d.%m.%Y')), "with value", solar_data[point]['solar'], "Wh /", solar_watt, "W for solar.")
+                                log.info("PV Output data added for {} with value {} Wh / {} W for solar. ".format(ts.strftime('%H:%M %d.%m.%Y'), solar_data[point]['solar'], solar_watt))
                             pv_status_values['pv_unixtime'] = point
                             continue
                         if response.status_code == 403:
                             pv_waittime = int(pv_limit(args.pv_key, args.pv_sid))+10
                             now = int(datetime.now().timestamp())
-                            print(datetime.now(), "PV Output Limit reached, waiting for", pv_waittime-now, "s.")
+                            log.warning("PV Output Limit reached, waiting for {} s.".format(pv_waittime-now))
                             while now < pv_waittime:
                                 time.sleep(1)
                                 now = int(datetime.now().timestamp())
                             response = requests.request("POST", url, headers=headers, data = payload)
                             if response.status_code == 200:
                                 if args.pv_consumption == 1:
-                                    print(datetime.now(), "PV Output data added for %s" % (ts.strftime('%H:%M %d.%m.%Y')), "with values", solar_data[point]['solar'], "Wh /", solar_watt, "W for solar and", solar_data[point]['consumption'], "Wh /", consumption_watt, "W for consumption.")
+                                    log.info("PV Output data added for {} with values {} Wh / {} W for solar and {} Wh / {} W for consumption.".format(ts.strftime('%H:%M %d.%m.%Y'), solar_data[point]['solar'], solar_watt, solar_data[point]['consumption'], consumption_watt))
                                 else:
-                                    print(datetime.now(), "PV Output data added for %s" % (ts.strftime('%H:%M %d.%m.%Y')), "with value", solar_data[point]['solar'], "Wh /", solar_watt, "W for solar.")
+                                    log.info("PV Output data added for {} with value {} Wh / {} W for solar. ".format(ts.strftime('%H:%M %d.%m.%Y'), solar_data[point]['solar'], solar_watt))
                                 pv_status_values['pv_unixtime'] = point
                             continue
         except Exception as e:
-            print(datetime.now(), "InfluxDB error.")
-            print(e)
+            log.error("InfluxDB error.")
+            log.error(e)
         finally:
             client.close()
 
         time.sleep(300 - ((time.time() - new_time.timestamp()) % 300)+10)
 except KeyboardInterrupt:
-    print("Script aborted...")
+    log.info("Script aborted...")
 finally:
-    print(datetime.now(), "Script Ended.")
+    log.info("Script Ended.")

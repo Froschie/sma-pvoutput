@@ -7,13 +7,13 @@ RUN chmod +x /s6download.sh && bash /s6download.sh && tar xfz /tmp/s6overlay.tar
 ENTRYPOINT ["/init"]
 
 # Image Description
-LABEL version="2.1" description="Script to Query data from SMA InfluxDB and store it to pvoutput.org."
+LABEL version="2.2" description="Script to Query data from SMA InfluxDB and store it to pvoutput.org."
 
 # Install Python and Python Modules
 RUN apk add --no-cache python3 py-pip && pip install influxdb requests && apk del py-pip && apk add py3-requests py3-msgpack
 
 # Define Environment Variables needed for Script
-ENV pv_key="abc" pv_sid="12345" pv_consumption=0 influx_ip="192.168.1.3" influx_port="8086" influx_user="user" influx_pw="pw" influx_db="SMA"
+ENV pv_key="abc" pv_sid="12345" pv_consumption=0 influx_ip="192.168.1.3" influx_port="8086" influx_user="user" influx_pw="pw" influx_db="SMA" log="WARNING"
 
 # Startup Script to Container
 RUN mkdir -p /etc/services.d/pv-output
