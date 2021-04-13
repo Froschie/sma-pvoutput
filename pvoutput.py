@@ -88,15 +88,16 @@ def pv_status(key, sid):
             log.debug(response.text.encode('utf8'))
             if response.status_code == 200:
                 break
-        pv_dict = {
-            'pv_year': d.strftime('%Y'),
-            'pv_month': d.strftime('%m'),
-            'pv_day': d.strftime('%d'),
-            'pv_hour': 0,
-            'pv_min': 0,
-            'pv_unixtime': time.mktime(d.timetuple())
-        }
-        return pv_dict
+        if response.status_code != 200:
+            pv_dict = {
+                'pv_year': d.strftime('%Y'),
+                'pv_month': d.strftime('%m'),
+                'pv_day': d.strftime('%d'),
+                'pv_hour': 0,
+                'pv_min': 0,
+                'pv_unixtime': time.mktime(d.timetuple())
+            }
+            return pv_dict
     pv_values = response.text.split(",")
     pv_year = int(pv_values[0][:4])
     pv_month = int(pv_values[0][4:6])
