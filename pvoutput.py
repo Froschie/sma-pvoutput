@@ -71,6 +71,7 @@ def pv_status(key, sid):
     url = "https://pvoutput.org/service/r2/getstatus.jsp"
     payload = {}
     headers = {
+        'X-Rate-Limit': '1',
         'X-Pvoutput-SystemId': sid,
         'X-Pvoutput-Apikey': key
     }
